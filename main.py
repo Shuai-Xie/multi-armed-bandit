@@ -1,6 +1,3 @@
-import matplotlib  # noqa
-matplotlib.use('Agg')  # noqa
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -36,12 +33,15 @@ def plot_results(solvers, solver_names, figname):
 
     ax1.set_xlabel('Time step')
     ax1.set_ylabel('Cumulative regret')
-    ax1.legend(loc=9, bbox_to_anchor=(1.82, -0.25), ncol=5)
+    ax1.legend(loc=9, bbox_to_anchor=(1.82, -0.25), ncol=6)
     ax1.grid('k', ls='--', alpha=0.3)
 
     # Sub.fig. 2: Probabilities estimated by solvers.
+
+    # 将 bandit 按照 prob 重新编号
     sorted_indices = sorted(range(b.n), key=lambda x: b.probas[x])
     ax2.plot(range(b.n), [b.probas[x] for x in sorted_indices], 'k--', markersize=12)
+    # 比较 solver 估计的 prob 与 GT prob 黑线关系
     for s in solvers:
         ax2.plot(range(b.n), [s.estimated_probas[x] for x in sorted_indices], 'x', markeredgewidth=2)
     ax2.set_xlabel('Actions sorted by ' + r'$\theta$')
@@ -49,13 +49,16 @@ def plot_results(solvers, solver_names, figname):
     ax2.grid('k', ls='--', alpha=0.3)
 
     # Sub.fig. 3: Action counts
+    num_steps = len(solvers[0].regrets)
     for s in solvers:
-        ax3.plot(range(b.n), np.array(s.counts) / float(len(solvers[0].regrets)), ls='steps', lw=2)
+        cnt_ratios = [s.counts[i] / num_steps for i in sorted_indices]
+        ax3.plot(range(b.n), cnt_ratios, drawstyle='steps', lw=2)
     ax3.set_xlabel('Actions')
     ax3.set_ylabel('Frac. # trials')
     ax3.grid('k', ls='--', alpha=0.3)
 
     plt.savefig(figname)
+    plt.show()
 
 
 def experiment(K, N):
@@ -64,26 +67,27 @@ def experiment(K, N):
     each with a randomly initialized reward probability.
 
     Args:
-        K (int): number of slot machiens.
+        K (int): number of slot machines.
         N (int): number of time steps to try.
     """
 
     b = BernoulliBandit(K)
-    print "Randomly generated Bernoulli bandit has reward probabilities:\n", b.probas
-    print "The best machine has index: {} and proba: {}".format(
-        max(range(K), key=lambda i: b.probas[i]), max(b.probas))
+    print('Random seed:', b.seed)
+    print("Bernoulli bandit has reward probabilities:\n", b.probas)
+    print("The best machine has index: {} and proba: {}".format(max(range(K), key=lambda i: b.probas[i]), max(b.probas)))
 
     test_solvers = [
-        # EpsilonGreedy(b, 0),
-        # EpsilonGreedy(b, 1),
+        EpsilonGreedy(b, 0),
+        EpsilonGreedy(b, 1),
         EpsilonGreedy(b, 0.01),
         UCB1(b),
+        # 使用 beta 先验分布 普遍效果较好
         BayesianUCB(b, 3, 1, 1),
-        ThompsonSampling(b, 1, 1)
+        ThompsonSampling(b, 1, 1),  # 执行最慢
     ]
     names = [
-        # 'Full-exploitation',
-        # 'Full-exploration',
+        'Full-exploitation',
+        'Full-exploration',
         r'$\epsilon$' + '-Greedy',
         'UCB1',
         'Bayesian UCB',
@@ -97,4 +101,4 @@ def experiment(K, N):
 
 
 if __name__ == '__main__':
-    experiment(10, 5000)
+    experiment(10, 10000)

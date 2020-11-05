@@ -6,7 +6,7 @@ This repo is set up for a blog post I wrote on ["The Multi-Armed Bandit Problem 
 
 The result of a small experiment on solving a Bernoulli bandit with K = 10 slot machines, each with a randomly initialized reward probability.
 
-![Alt text](results_K10_N5000.png?raw=true "K=10 N=5000")
+![Alt text](results_K10_N10000.png?raw=true "K=10 N=5000")
 
 - (Left) The plot of time step vs the cumulative regrets.
 - (Middle) The plot of true reward probability vs estimated probability.
